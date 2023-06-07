@@ -24,6 +24,7 @@ fun main() {
             translation = line[1],
             correctAnswerCount = line[2].toIntOrNull() ?: 0,
         )
+
         dictionary.add(word)
     }
 
