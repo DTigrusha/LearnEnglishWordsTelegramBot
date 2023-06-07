@@ -27,5 +27,23 @@ fun main() {
         dictionary.add(word)
     }
 
-    println(dictionary)
+    println(
+        "Вас приветствует Тренажер - бот!\nЯ помогу Вам в изучении английских слов.\nДля навигации по меню введите " +
+                "соответствующую цифру.\n\nМеню:\n1 - Учить слова.\n2 - Статистика.\n0 - Выход."
+    )
+
+    while (true) {
+        when (readln()) {
+            "1" -> println("Начинаем учить слова.") // TODO реализовать функцию изучения слов!
+            "2" -> {
+                val numberOfWords = dictionary.size
+                val numberOfLearnedWords = (dictionary.filter { word: Word -> word.correctAnswerCount >= 3 }).size
+                val progressInPercent = (numberOfLearnedWords * 100 / numberOfWords)
+                println("Ваша статистика: выучено $numberOfLearnedWords из $numberOfWords слов | $progressInPercent %.")
+            }
+
+            "0" -> break
+            else -> println("Вы ввели не ту цифру. Пробуйте снова!")
+        }
+    }
 }
