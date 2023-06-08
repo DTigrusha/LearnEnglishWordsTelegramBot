@@ -4,3 +4,5 @@ cat|кошка|
 horse|лошадь|3
 fox|лиса|1
 mouse|мышь|3
+wolf|волк|
+house|дом|1

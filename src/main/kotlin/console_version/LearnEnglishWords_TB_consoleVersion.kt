@@ -5,7 +5,7 @@ import java.io.File
 data class Word(
     val englishWord: String,
     val translation: String,
-    val correctAnswerCount: Int = 0,
+    var correctAnswerCount: Int = 0,
 )
 
 fun main() {
@@ -28,18 +28,56 @@ fun main() {
     }
 
     println(
-        "Вас приветствует Тренажер - бот!\nЯ помогу Вам в изучении английских слов.\nДля навигации по меню введите " +
-                "соответствующую цифру.\n\nМеню:\n1 - Учить слова.\n2 - Статистика.\n0 - Выход."
+        "Вас приветствует Тренажер - бот!\nЯ помогу Вам в изучении английских слов.\nДля навигации по меню введите" +
+                " соответствующую цифру."
     )
+
+    startMenu()
 
     while (true) {
         when (readln()) {
-            "1" -> println("Начинаем учить слова.") // TODO реализовать функцию изучения слов!
+            "1" -> {
+                while (true) {
+                    val unlearnedWords = mutableListOf<Word>()
+                    for (word in dictionary) {
+                        if (word.correctAnswerCount < 3) {
+                            unlearnedWords.add(word)
+                        }
+                    }
+
+                    if (unlearnedWords.isEmpty()) {
+                        println("Все слова выучены!")
+                        return
+                    } else {
+                        val wordForLearning = unlearnedWords.random()
+                        println(
+                            "Выберете перевода для слова \"${(wordForLearning.englishWord).uppercase()}\" из " +
+                                    "предложенных ниже вариантов и введите цифру, соответствующую Вашему ответу:"
+                        )
+
+                        val listOfAnswers = unlearnedWords.take(4).shuffled()
+                        var number = 1
+                        listOfAnswers.forEach {
+                            println("${number++} - ${it.translation}")
+                        }
+
+                        println("0 - для возврата в главное меню")
+                    }
+
+                    val userAnswer = readln().toIntOrNull()
+                    if (userAnswer == 0)
+                        break
+                }
+                startMenu()
+            }
+
             "2" -> {
                 val numberOfWords = dictionary.size
                 val numberOfLearnedWords = (dictionary.filter { word: Word -> word.correctAnswerCount >= 3 }).size
                 val progressInPercent = (numberOfLearnedWords * 100 / numberOfWords)
-                println("Ваша статистика: выучено $numberOfLearnedWords из $numberOfWords слов | $progressInPercent %.")
+                println(
+                    "Ваша статистика: выучено $numberOfLearnedWords из $numberOfWords слов | $progressInPercent %.\n" +
+                            "Для продолжения введите соответствующую цифру меню.")
             }
 
             "0" -> break
@@ -47,3 +85,8 @@ fun main() {
         }
     }
 }
+
+fun startMenu() {
+    println("\nМеню:\n1 - Учить слова.\n2 - Статистика.\n0 - Выход.")
+}
+
