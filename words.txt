@@ -10,3 +10,7 @@ chair|стул|2
 table|стол|3
 question|вопрос|3
 answer|ответ|3
+circle|круг|1
+square|площадь|2
+fish|рыба|
+ocean|океан|

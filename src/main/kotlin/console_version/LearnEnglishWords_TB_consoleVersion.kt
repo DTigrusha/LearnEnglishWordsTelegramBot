@@ -4,20 +4,6 @@ import java.io.File
 
 const val VARIANTS_OF_ANSWER = 4
 const val MAX_CORRECT_ANSWER = 3
-val additionalWords: List<Word> = listOf(
-    Word("", "контур", 0),
-    Word("", "чашка", 0),
-    Word("", "мыло", 0),
-    Word("", "слон", 0),
-    Word("", "здание", 0),
-    Word("", "кресло", 0),
-    Word("", "крокодил", 0),
-    Word("", "динозавр", 0),
-    Word("", "овал", 0),
-    Word("", "слово", 0),
-    Word("", "охотник", 0),
-    Word("", "стена", 0),
-)
 
 data class Word(
     val englishWord: String,
@@ -56,25 +42,23 @@ fun main() {
             "1" -> {
                 while (true) {
                     val unlearnedWords = dictionary.filter { it.correctAnswerCount < MAX_CORRECT_ANSWER }
+                    val learnedWords = dictionary.filter { it.correctAnswerCount == MAX_CORRECT_ANSWER }
 
                     if (unlearnedWords.isEmpty()) {
                         println("Все слова выучены!")
                         return
                     } else {
-                        val wordForLearning = unlearnedWords.random()
+                        var listOfAnswers: MutableList<Word> =
+                            unlearnedWords.take(VARIANTS_OF_ANSWER).toMutableList()
+                        val wordForLearning = listOfAnswers.random()
+
                         println(
                             "Выберете перевода для слова \"${(wordForLearning.englishWord).uppercase()}\" из " +
                                     "предложенных ниже вариантов и введите цифру, соответствующую Вашему ответу:"
                         )
 
-                        var listOfAnswers: MutableList<Word> =
-                            unlearnedWords.take(VARIANTS_OF_ANSWER).toMutableList()
-                        if (!listOfAnswers.contains(wordForLearning)) {
-                            listOfAnswers[(0 until listOfAnswers.size).random()] = wordForLearning
-                        }
-
                         while (listOfAnswers.size < VARIANTS_OF_ANSWER) {
-                            listOfAnswers.add(additionalWords.random())
+                            listOfAnswers.add(learnedWords.random())
                             listOfAnswers = listOfAnswers.distinctBy { it }.toMutableList()
                         }
 
