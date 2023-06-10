@@ -1,6 +1,16 @@
 hello|привет|3
 dog|собака|3
-cat|кошка|
+cat|кошка|3
 horse|лошадь|3
 fox|лиса|1
 mouse|мышь|3
+wolf|волк|3
+house|дом|3
+chair|стул|2
+table|стол|3
+question|вопрос|3
+answer|ответ|3
+circle|круг|1
+square|площадь|2
+fish|рыба|
+ocean|океан|
