@@ -41,15 +41,16 @@ fun main() {
         when (readln()) {
             "1" -> {
                 while (true) {
-                    val unlearnedWords = dictionary.filter { it.correctAnswerCount < MAX_CORRECT_ANSWER }
-                    val learnedWords = dictionary.filter { it.correctAnswerCount == MAX_CORRECT_ANSWER }
+                    val unlearnedWords =
+                        dictionary.filter { it.correctAnswerCount < MAX_CORRECT_ANSWER }.toMutableList()
+                    val learnedWords =
+                        dictionary.filter { it.correctAnswerCount == MAX_CORRECT_ANSWER }.toMutableList()
 
                     if (unlearnedWords.isEmpty()) {
                         println("Все слова выучены!")
                         return
                     } else {
-                        var listOfAnswers: MutableList<Word> =
-                            unlearnedWords.take(VARIANTS_OF_ANSWER).toMutableList()
+                        val listOfAnswers = unlearnedWords.take(VARIANTS_OF_ANSWER).toMutableList()
                         val wordForLearning = listOfAnswers.random()
 
                         println(
@@ -57,9 +58,9 @@ fun main() {
                                     "предложенных ниже вариантов и введите цифру, соответствующую Вашему ответу:"
                         )
 
-                        while (listOfAnswers.size < VARIANTS_OF_ANSWER) {
-                            listOfAnswers.add(learnedWords.random())
-                            listOfAnswers = listOfAnswers.distinctBy { it }.toMutableList()
+                        if (listOfAnswers.size < VARIANTS_OF_ANSWER) {
+                            learnedWords.shuffle()
+                            listOfAnswers.addAll(learnedWords.take(VARIANTS_OF_ANSWER - listOfAnswers.size))
                         }
 
                         listOfAnswers.shuffle()
