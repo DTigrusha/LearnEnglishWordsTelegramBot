@@ -1,9 +1,7 @@
 package console_version
 
 import java.io.File
-
-const val VARIANTS_OF_ANSWER = 4
-const val MAX_CORRECT_ANSWER = 3
+import java.io.PrintWriter
 
 data class Word(
     val englishWord: String,
@@ -11,9 +9,14 @@ data class Word(
     var correctAnswerCount: Int = 0,
 )
 
+const val VARIANTS_OF_ANSWER = 4
+const val MAX_CORRECT_ANSWER = 3
+
+val wordsFile = File("words.txt")
+
 fun main() {
 
-    val wordsFile = File("words.txt")
+
     wordsFile.createNewFile()
 
     val dictionary: MutableList<Word> = mutableListOf()
@@ -45,13 +48,13 @@ fun main() {
                         dictionary.filter { it.correctAnswerCount < MAX_CORRECT_ANSWER }.toMutableList()
                     val learnedWords =
                         dictionary.filter { it.correctAnswerCount == MAX_CORRECT_ANSWER }.toMutableList()
+                    val listOfAnswers = unlearnedWords.take(VARIANTS_OF_ANSWER).toMutableList()
+                    val wordForLearning = listOfAnswers.random()
 
                     if (unlearnedWords.isEmpty()) {
                         println("Все слова выучены!")
                         return
                     } else {
-                        val listOfAnswers = unlearnedWords.take(VARIANTS_OF_ANSWER).toMutableList()
-                        val wordForLearning = listOfAnswers.random()
 
                         println(
                             "Выберете перевода для слова \"${(wordForLearning.englishWord).uppercase()}\" из " +
@@ -74,8 +77,22 @@ fun main() {
                     }
 
                     val userAnswer = readln().toIntOrNull()
-                    if (userAnswer == 0)
+                    if (userAnswer == 0) {
                         break
+                    } else if (userAnswer == (listOfAnswers.indexOf(wordForLearning) + 1)) {
+                        println("Правильно!\n")
+
+                        wordForLearning.correctAnswerCount++
+
+                        saveDictionary(dictionary)
+                    } else {
+
+                        println(
+                            "Неправильно: слово \"${wordForLearning.englishWord}\" " +
+                                    "- перевод \"${wordForLearning.translation}\".\n"
+                        )
+                    }
+
                 }
                 startMenu()
             }
@@ -98,5 +115,17 @@ fun main() {
 
 fun startMenu() {
     println("\nМеню:\n1 - Учить слова.\n2 - Статистика.\n0 - Выход.")
+}
+
+fun saveDictionary(dictionary: MutableList<Word>) {
+    val writer = PrintWriter(wordsFile)
+
+    dictionary.forEach {
+        val lineOfChangedWords =
+            listOf(it.englishWord, it.translation, it.correctAnswerCount.toString()).joinToString("|")
+        writer.appendLine(lineOfChangedWords)
+    }
+
+    writer.close()
 }
 
