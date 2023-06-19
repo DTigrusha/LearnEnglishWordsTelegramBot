@@ -11,13 +11,13 @@ const val LEARN_WORDS_CLICKED = "learn_words_clicked"
 const val STATISTICS_CLICKED = "statistics_clicked"
 const val CALLBACK_DATA_ANSWER_PREFIX = "answer_"
 
-class TelegramBotService(val botToken: String) {
+class TelegramBotService(private val botToken: String) {
 
     companion object {
         const val BOT_URL = "https://api.telegram.org/bot"
     }
 
-    fun getUpdates(botToken: String, updateId: Int): String {
+    fun getUpdates(updateId: Int): String {
         val urlGetUpdates = "$BOT_URL$botToken/getUpdates?offset=$updateId"
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
@@ -25,7 +25,7 @@ class TelegramBotService(val botToken: String) {
         return response.body()
     }
 
-    fun sendMessage(botToken: String, chatId: Int, messageText: String): String {
+    fun sendMessage(chatId: Int, messageText: String): String {
         val encoded = URLEncoder.encode(
             messageText,
             StandardCharsets.UTF_8
@@ -39,7 +39,7 @@ class TelegramBotService(val botToken: String) {
         return response.body()
     }
 
-    fun sendMenu(botToken: String, chatId: Int): String {
+    fun sendMenu(chatId: Int): String {
         val urlSendMessage = "$BOT_URL$botToken/sendMessage"
         val sendMenuBody = """
             {
@@ -115,15 +115,11 @@ class TelegramBotService(val botToken: String) {
         return response.body()
     }
 
-    fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, botToken: String, chatId: Int?) {
+    fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, chatId: Int) {
         if (trainer.getNextQuestion() == null) {
-            if (chatId != null) {
-                sendMessage(botToken, chatId, "Вы выучили все слова в базе!")
-            }
+            sendMessage(chatId, "Вы выучили все слова в базе!")
         } else {
-            if (chatId != null) {
-                sendQuestion(botToken, chatId, trainer.getNextQuestion())
-            }
+            sendQuestion(botToken, chatId, trainer.getNextQuestion())
         }
     }
 }

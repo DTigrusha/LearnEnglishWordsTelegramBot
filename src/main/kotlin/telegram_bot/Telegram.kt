@@ -13,44 +13,42 @@ fun main(args: Array<String>) {
 
     while (true) {
         Thread.sleep(2000)
-        val updates: String = telegramBot.getUpdates(telegramBot.botToken, lastUpdateId)
+        val updates: String = telegramBot.getUpdates(lastUpdateId)
         println(updates)
 
         val updateId = updateIdRegex.find(updates)?.groups?.get(1)?.value?.toIntOrNull() ?: continue
         lastUpdateId = updateId.plus(1)
 
-        val chatId = chatIdRegex.find(updates)?.groups?.get(1)?.value?.toInt()
+        val chatId = chatIdRegex.find(updates)?.groups?.get(1)?.value?.toInt() ?: continue
         val chatText = chatTextRegex.find(updates)?.groups?.get(1)?.value
         val data = dataRegex.find(updates)?.groups?.get(1)?.value
 
-        if (chatText?.contains("/start", true) == true && chatId != null) {
-            telegramBot.sendMenu(telegramBot.botToken, chatId)
+        if (chatText?.contains("/start", true) == true) {
+            telegramBot.sendMenu(chatId)
         }
-        if (data?.contains(STATISTICS_CLICKED) == true && chatId != null) {
+        if (data?.contains(STATISTICS_CLICKED) == true) {
             val statistics = trainer.getStatistics()
             telegramBot.sendMessage(
-                telegramBot.botToken,
                 chatId,
                 "Ваша статистика: выучено ${statistics.numberOfLearnedWords} из ${statistics.numberOfWords} слов |" +
                         " ${statistics.progressInPercent} %.",
             )
         }
-        if (data?.contains(LEARN_WORDS_CLICKED) == true && chatId != null) {
-            telegramBot.checkNextQuestionAndSend(trainer, telegramBot.botToken, chatId)
+        if (data?.contains(LEARN_WORDS_CLICKED) == true) {
+            telegramBot.checkNextQuestionAndSend(trainer, chatId)
         }
-        if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true && chatId != null) {
+        if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true) {
             val userAnswerIndex = data.substringAfter(CALLBACK_DATA_ANSWER_PREFIX).toInt()
             if (trainer.checkAnswer(userAnswerIndex)) {
-                telegramBot.sendMessage(telegramBot.botToken, chatId, "Правильно!")
+                telegramBot.sendMessage(chatId, "Правильно!")
             } else {
                 telegramBot.sendMessage(
-                    telegramBot.botToken,
                     chatId,
-                    "Не правильно:\n${trainer.question?.wordForLearning?.englishWord} - " +
+                    "Неправильно:\n${trainer.question?.wordForLearning?.englishWord} - " +
                             "${trainer.question?.wordForLearning?.translation}.",
                 )
             }
-            telegramBot.checkNextQuestionAndSend(trainer, telegramBot.botToken, chatId)
+            telegramBot.checkNextQuestionAndSend(trainer, chatId)
         }
     }
 }

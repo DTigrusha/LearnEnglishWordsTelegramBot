@@ -1,8 +1,8 @@
-hello|привет|1
-dog|собака|1
-cat|кошка|2
+hello|привет|3
+dog|собака|2
+cat|кошка|3
 horse|лошадь|3
-fox|лиса|0
+fox|лиса|2
 mouse|мышь|3
 wolf|волк|1
 house|дом|3
@@ -10,7 +10,7 @@ chair|стул|3
 table|стол|1
 question|вопрос|0
 answer|ответ|2
-circle|круг|1
-square|площадь|2
+circle|круг|2
+square|площадь|3
 fish|рыба|3
 ocean|океан|3
