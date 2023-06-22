@@ -1,10 +1,8 @@
-package console_version
+package consoleversion
 
-data class Word(
-    val englishWord: String,
-    val translation: String,
-    var correctAnswerCount: Int = 0,
-)
+import LearnWordsTrainer
+import Question
+import Word
 
 fun Question.asConsoleString(): String {
     val listOfAnswers = this.listOfAnswers
@@ -18,7 +16,7 @@ fun Question.asConsoleString(): String {
 fun main() {
 
     val trainer = try {
-        LearnWordsTrainer(3, 4)
+        LearnWordsTrainer()
     } catch (e: Exception) {
         println("Невозможно загрузить словарь.")
         return
@@ -45,7 +43,7 @@ fun main() {
                     val userAnswer = readln().toIntOrNull()
                     if (userAnswer == 0) break
 
-                    if (trainer.checkAnswer(userAnswer?.minus(1))) {
+                    if (trainer.checkAnswer(userAnswer)) {
                         println("Правильно!\n")
                     } else {
                         println(

@@ -1,4 +1,3 @@
-import consoleversion.Word
 import kotlinx.serialization.Serializable
 import java.io.File
 import java.io.PrintWriter
@@ -80,7 +79,9 @@ class LearnWordsTrainer(
             val dictionary = mutableListOf<Word>()
             wordsFile.readLines().forEach {
                 val line = it.split("|")
-                dictionary.add(Word(line[0], line[1], line[2].toIntOrNull() ?: 0))
+                if (line.size == 3) {
+                    dictionary.add(Word(line[0], line[1], line[2].toIntOrNull() ?: 0))
+                }
             }
             return dictionary
         } catch (e: IndexOutOfBoundsException) {
