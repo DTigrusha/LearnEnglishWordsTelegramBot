@@ -1,9 +1,9 @@
-package telegram_bot
-
-import console_version.Word
+import consoleversion.Word
+import kotlinx.serialization.Serializable
 import java.io.File
 import java.io.PrintWriter
 
+@Serializable
 data class Word(
     val englishWord: String,
     val translation: String,
@@ -22,6 +22,7 @@ data class Question(
 )
 
 class LearnWordsTrainer(
+    private val fileName: String = "words.txt",
     private val maxCorrectAnswer: Int = 3,
     private val variantsOfAnswer: Int = 4,
 ) {
@@ -62,7 +63,7 @@ class LearnWordsTrainer(
             val correctAnswerId = it.listOfAnswers.indexOf(it.wordForLearning) + 1
             if (correctAnswerId == userAnswerIndex) {
                 it.wordForLearning.correctAnswerCount++
-                saveDictionary(dictionary)
+                saveDictionary()
                 true
             } else {
                 false
@@ -71,17 +72,24 @@ class LearnWordsTrainer(
     }
 
     private fun loadDictionary(): MutableList<Word> {
-        val dictionary = mutableListOf<Word>()
-        val wordsFile = File("words.txt")
-        wordsFile.readLines().forEach {
-            val line = it.split("|")
-            dictionary.add(Word(line[0], line[1], line[2].toIntOrNull() ?: 0))
+        try {
+            val wordsFile = File(fileName)
+            if (!wordsFile.exists()) {
+                File("words.txt").copyTo(wordsFile)
+            }
+            val dictionary = mutableListOf<Word>()
+            wordsFile.readLines().forEach {
+                val line = it.split("|")
+                dictionary.add(Word(line[0], line[1], line[2].toIntOrNull() ?: 0))
+            }
+            return dictionary
+        } catch (e: IndexOutOfBoundsException) {
+            throw IllegalStateException("Невозможно загрузить словарь.")
         }
-        return dictionary
     }
 
-    private fun saveDictionary(dictionary: MutableList<Word>) {
-        val wordsFile = File("words.txt")
+    private fun saveDictionary() {
+        val wordsFile = File(fileName)
         val writer = PrintWriter(wordsFile)
 
         dictionary.forEach {
@@ -90,5 +98,10 @@ class LearnWordsTrainer(
             writer.appendLine(lineOfChangedWords)
         }
         writer.close()
+    }
+
+    fun resetProgress() {
+        dictionary.forEach { it.correctAnswerCount = 0 }
+        saveDictionary()
     }
 }
