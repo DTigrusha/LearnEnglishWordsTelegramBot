@@ -1,3 +1,4 @@
+
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -11,6 +12,7 @@ const val LEARN_WORDS_CLICKED = "learn_words_clicked"
 const val STATISTICS_CLICKED = "statistics_clicked"
 const val RESET_CLICKED = "reset_clicked"
 const val CALLBACK_DATA_ANSWER_PREFIX = "answer_"
+const val MENU_CLICKED = "menu_clicked"
 
 @Serializable
 data class SendMessageRequest(
@@ -25,7 +27,7 @@ data class SendMessageRequest(
 @Serializable
 data class ReplyMarkup(
     @SerialName("inline_keyboard")
-    val inlineKeyboard: List<List<InlineKeyboard>>,
+    val inlineKeyboard: MutableList<List<InlineKeyboard>>,
 )
 
 @Serializable
@@ -72,7 +74,7 @@ class TelegramBotService(private val botToken: String) {
             chatId = chatId,
             text = "Основное меню",
             replyMarkup = ReplyMarkup(
-                listOf(
+                mutableListOf(
                     listOf(
                         InlineKeyboard(text = "Изучить слова", callbackData = LEARN_WORDS_CLICKED),
                         InlineKeyboard(text = "Статистика", callbackData = STATISTICS_CLICKED),
@@ -80,7 +82,7 @@ class TelegramBotService(private val botToken: String) {
                     listOf(
                         InlineKeyboard(text = "Сбросить прогресс", callbackData = RESET_CLICKED),
                     )
-                )
+                ),
             )
         )
         val requestBodyString = json.encodeToString(requestBody)
@@ -95,17 +97,23 @@ class TelegramBotService(private val botToken: String) {
 
     private fun sendQuestion(botToken: String, chatId: Long, question: Question, json: Json): String {
         val urlSendMessage = "$BOT_URL$botToken/sendMessage"
+        val listOfInlineKeyboard: MutableList<List<InlineKeyboard>> = question.listOfAnswers.mapIndexed { index, word ->
+            listOf(
+                InlineKeyboard(
+                    text = word.translation, callbackData = "$CALLBACK_DATA_ANSWER_PREFIX${index + 1}"
+                )
+            )
+        }.toMutableList()
+        listOfInlineKeyboard.add(listOf(InlineKeyboard(text = "Вернуться в меню", callbackData = MENU_CLICKED)))
+
         val requestBody = SendMessageRequest(
             chatId = chatId,
             text = question.wordForLearning.englishWord,
             replyMarkup = ReplyMarkup(
-                listOf(question.listOfAnswers.mapIndexed { index, word ->
-                    InlineKeyboard(
-                        text = word.translation, callbackData = "$CALLBACK_DATA_ANSWER_PREFIX${index + 1}"
-                    )
-                })
+                listOfInlineKeyboard
             )
         )
+
         val requestBodyString = json.encodeToString(requestBody)
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlSendMessage))
@@ -116,11 +124,11 @@ class TelegramBotService(private val botToken: String) {
         return response.body()
     }
 
-    fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, chatId: Long, json: Json) {
-        if (trainer.getNextQuestion() == null) {
+    fun checkNextQuestionAndSend(question: Question?, chatId: Long, json: Json) {
+        if (question == null) {
             sendMessage(chatId, "Вы выучили все слова в базе!", json)
         } else {
-            sendQuestion(botToken, chatId, trainer.getNextQuestion()!!, json)
+            sendQuestion(botToken, chatId, question, json)
         }
     }
 }
