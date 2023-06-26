@@ -50,17 +50,16 @@ fun main(args: Array<String>) {
     var lastUpdateId: Long = 0
     val trainers = HashMap<Long, LearnWordsTrainer>()
 
-    runCatching {
-        while (true) {
-            Thread.sleep(2000)
-            val responseString: String = telegramBot.getUpdates(lastUpdateId)
-            println(responseString)
-            val response: Response = json.decodeFromString(responseString)
-            if (response.result.isEmpty()) continue
-            val sortedUpdates = response.result.sortedBy { it.updateId }
-            sortedUpdates.forEach { handleUpdate(it, json, trainers, telegramBot) }
-            lastUpdateId = sortedUpdates.last().updateId + 1
-        }
+    while (true) {
+        Thread.sleep(2000)
+        val result = runCatching { telegramBot.getUpdates(lastUpdateId) }
+        val responseString: String = result.getOrNull() ?: continue
+        println(responseString)
+        val response: Response = json.decodeFromString(responseString)
+        if (response.result.isEmpty()) continue
+        val sortedUpdates = response.result.sortedBy { it.updateId }
+        sortedUpdates.forEach { handleUpdate(it, json, trainers, telegramBot) }
+        lastUpdateId = sortedUpdates.last().updateId + 1
     }
 }
 
@@ -93,6 +92,7 @@ fun handleUpdate(
         telegramBot.sendMessage(chatId, "Прогресс сброшен!", json)
     }
     if (data?.contains(LEARN_WORDS_CLICKED) == true) {
+        trainer.checkAndUpdateUserWordsFile()
         telegramBot.checkNextQuestionAndSend(trainer.getNextQuestion(), chatId, json)
     }
     if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true) {

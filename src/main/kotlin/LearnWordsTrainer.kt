@@ -27,7 +27,7 @@ class LearnWordsTrainer(
 ) {
 
     var question: Question? = null
-    private val dictionary = loadDictionary()
+    val dictionary = loadDictionary()
 
     fun getStatistics(): Statistics {
         val numberOfWords = dictionary.size
@@ -99,6 +99,34 @@ class LearnWordsTrainer(
             writer.appendLine(lineOfChangedWords)
         }
         writer.close()
+    }
+    
+    private fun File.loadDictionary(): MutableList<Word> {
+        return mutableListOf()
+    }
+    
+    fun checkAndUpdateUserWordsFile() {
+        val userWordsFile = File(fileName)
+        val generalWordsFile = File("words.txt")
+        val generalDictionary = generalWordsFile.loadDictionary()
+        
+        if (generalWordsFile.length() > userWordsFile.length()) {
+            val userDictionary = dictionary
+            generalWordsFile.readLines().forEach {
+                val line = it.split("|")
+                if (line.size == 3) {
+                    generalDictionary.add(Word(line[0], line[1], line[2].toIntOrNull() ?: 0))
+                }
+            }
+            for (word in generalDictionary) {
+                val userDictionaryForCompare = userDictionary.map { it.englishWord }
+                if (!userDictionaryForCompare.contains(word.englishWord)) {
+                    userDictionary.add(word)
+                    println(word)
+                }
+            }
+            saveDictionary()
+        }
     }
 
     fun resetProgress() {
