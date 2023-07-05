@@ -26,8 +26,13 @@ road|дорога|0
 tree|дерево|0
 flower|цветок|0
 window|окно|0
-floor|стол|0
 floor|пол|0
 door|дверь|0
 drawing|рисунок|
 arm|рука|
+parrot|попугай|
+penguin|пингвин|
+pigeon|голубь|
+swan|лебедь|
+train|поезд|
+building|здание|
