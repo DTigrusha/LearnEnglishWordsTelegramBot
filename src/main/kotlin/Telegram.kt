@@ -1,8 +1,13 @@
-
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+
+@Serializable
+data class Response(
+    @SerialName("result")
+    val result: List<Update>?,
+)
 
 @Serializable
 data class Update(
@@ -12,12 +17,6 @@ data class Update(
     val message: Message? = null,
     @SerialName("callback_query")
     val callbackQuery: CallbackQuery? = null,
-)
-
-@Serializable
-data class Response(
-    @SerialName("result")
-    val result: List<Update>,
 )
 
 @Serializable
@@ -67,14 +66,13 @@ fun main(args: Array<String>) {
     var lastUpdateId: Long = 0
     val trainers = HashMap<Long, LearnWordsTrainer>()
 
-
     while (true) {
         Thread.sleep(2000)
         val result = runCatching { telegramBot.getUpdates(lastUpdateId) }
         val responseString: String = result.getOrNull() ?: continue
         println(responseString)
         val response: Response = json.decodeFromString(responseString)
-        if (response.result.isEmpty()) continue
+        if (response.result.isNullOrEmpty()) continue
         val sortedUpdates = response.result.sortedBy { it.updateId }
         sortedUpdates.forEach { handleUpdate(it, json, trainers, telegramBot) }
         lastUpdateId = sortedUpdates.last().updateId + 1
@@ -123,13 +121,20 @@ fun handleUpdate(
     if (data?.contains(LEARN_WORDS_CLICKED) == true) {
         trainer.checkAndUpdateUserWordsFile()
         telegramBot.checkNextQuestionAndSend(trainer.getNextQuestion(), chatId, json)
+        if (
+            !trainer.question?.wordForLearning?.filePath.isNullOrEmpty() ||
+            !trainer.question?.wordForLearning?.fileId.isNullOrEmpty()
+
+        ) {
+            telegramBot.checkAndSendPhotoHint(trainer, json, chatId)
+        }
     }
     if (data?.contains(ADD_DICTIONARY_CLICKED) == true) {
         telegramBot.sendMessage(
             chatId,
             "ИНСТРУКЦИЯ.\nДля добавления слов в базовый словарь Вам необходимо:\n1. Создать текстовый файл с " +
                     "расширением \".txt\". Например, name.txt.\n2. Добавить в указанный файл дополнительные слова для " +
-                    "изучения в формате: \"английское слово|перевод|\". Например,\nword|слово|\nworld|мир|\nname|имя|" +
+                    "изучения в формате: \"английское слово|перевод|||\". Например,\nword|слово|||\nworld|мир||\nname|имя|||" +
                     "\n3. Прикрепить и отправить мне подготовленный файл.",
             json,
         )
@@ -143,11 +148,17 @@ fun handleUpdate(
                 chatId,
                 "Неправильно:\n${trainer.question?.wordForLearning?.englishWord} - " +
                         "${trainer.question?.wordForLearning?.translation}.",
-                json
+                json,
             )
         }
         telegramBot.checkNextQuestionAndSend(trainer.getNextQuestion()!!, chatId, json)
+        if (
+            !trainer.question?.wordForLearning?.filePath.isNullOrEmpty() ||
+            !trainer.question?.wordForLearning?.fileId.isNullOrEmpty()
 
+        ) {
+            telegramBot.checkAndSendPhotoHint(trainer, json, chatId)
+        }
     }
     if (data == MENU_CLICKED) {
         telegramBot.sendMenu(chatId, json)
