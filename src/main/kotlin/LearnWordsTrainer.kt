@@ -5,6 +5,8 @@ data class Word(
     val englishWord: String,
     val translation: String,
     var correctAnswerCount: Int = 0,
+    var filePath: String?,
+    var fileId: String?,
 )
 
 data class Statistics(
@@ -25,7 +27,7 @@ class LearnWordsTrainer(
 ) {
 
     var question: Question? = null
-    private val dictionary = loadDictionary(File(fileName))
+    val dictionary = loadDictionary(File(fileName))
 
     fun getStatistics(): Statistics {
         val numberOfWords = dictionary.size
@@ -75,38 +77,66 @@ class LearnWordsTrainer(
             }
             val dictionary = mutableListOf<Word>()
             file.readLines().forEach {
-                val line = it.split("|")
-                if (line.size == 3) {
-                    dictionary.add(Word(line[0], line[1], line[2].toIntOrNull() ?: 0))
+                val line = it.split("|").toMutableList()
+                while (line.size != 5) {
+                    line.add("")
+                }
+                if (line.size >= 5) {
+                    dictionary.add(Word(line[0], line[1], line[2].toIntOrNull() ?: 0, line[3], line[4]))
+                }
+            }
+            for (word in dictionary) {
+                if (word.filePath.isNullOrEmpty()) {
+                    val path = File("TelegramBot_pictures")
+                    val listOfFiles = mutableListOf<File>()
+                    path.walk().forEach {
+                        if (it.isFile) {
+                            listOfFiles.add(it)
+                        }
+                    }
+                    for (element in listOfFiles) {
+                        if (element.nameWithoutExtension == word.englishWord) {
+                            word.filePath = element.path
+                        }
+                    }
                 }
             }
             return dictionary
+            saveDictionary()
         } catch (e: IndexOutOfBoundsException) {
             throw IllegalStateException("Невозможно загрузить словарь.")
         }
     }
 
-    private fun saveDictionary() {
+    fun saveDictionary() {
         val wordsFile = File(fileName)
         val writer = PrintWriter(wordsFile)
-
         dictionary.forEach {
             val lineOfChangedWords =
-                listOf(it.englishWord, it.translation, it.correctAnswerCount.toString()).joinToString("|")
+                listOf(
+                    it.englishWord,
+                    it.translation,
+                    it.correctAnswerCount.toString(),
+                    it.filePath,
+                    it.fileId,
+                ).joinToString("|")
             writer.appendLine(lineOfChangedWords)
         }
         writer.close()
     }
 
-    private fun checkDictionaries(firstDictionary: MutableList<Word>, secondDictionary: MutableList<Word>): MutableList<Word> {
+    private fun checkDictionaries(
+        firstDictionary: MutableList<Word>,
+        secondDictionary: MutableList<Word>,
+    ): MutableList<Word> {
         for (word in firstDictionary) {
             val userDictionaryForCompare = secondDictionary.map { it.englishWord }
             if (!userDictionaryForCompare.contains(word.englishWord)) {
                 secondDictionary.add(word)
             }
-            saveDictionary()
         }
         return secondDictionary
+        saveDictionary()
     }
 
     fun checkAndUpdateUserWordsFile() {
