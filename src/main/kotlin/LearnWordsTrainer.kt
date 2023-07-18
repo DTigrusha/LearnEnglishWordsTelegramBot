@@ -1,12 +1,12 @@
-import kotlinx.serialization.Serializable
 import java.io.File
 import java.io.PrintWriter
 
-@Serializable
 data class Word(
     val englishWord: String,
     val translation: String,
     var correctAnswerCount: Int = 0,
+    var filePath: String?,
+    var fileId: String?,
 )
 
 data class Statistics(
@@ -27,7 +27,7 @@ class LearnWordsTrainer(
 ) {
 
     var question: Question? = null
-    val dictionary = loadDictionary()
+    val dictionary = loadDictionary(File(fileName))
 
     fun getStatistics(): Statistics {
         val numberOfWords = dictionary.size
@@ -70,63 +70,87 @@ class LearnWordsTrainer(
         } ?: false
     }
 
-    private fun loadDictionary(): MutableList<Word> {
+    private fun loadDictionary(file: File): MutableList<Word> {
         try {
-            val wordsFile = File(fileName)
-            if (!wordsFile.exists()) {
-                File("words.txt").copyTo(wordsFile)
+            if (!file.exists()) {
+                File("words.txt").copyTo(file)
             }
             val dictionary = mutableListOf<Word>()
-            wordsFile.readLines().forEach {
-                val line = it.split("|")
-                if (line.size == 3) {
-                    dictionary.add(Word(line[0], line[1], line[2].toIntOrNull() ?: 0))
+            file.readLines().forEach {
+                val line = it.split("|").toMutableList()
+                while (line.size != 5) {
+                    line.add("")
+                }
+                if (line.size >= 5) {
+                    dictionary.add(Word(line[0], line[1], line[2].toIntOrNull() ?: 0, line[3], line[4]))
+                }
+            }
+            for (word in dictionary) {
+                if (word.filePath.isNullOrEmpty()) {
+                    val path = File("TelegramBot_pictures")
+                    val listOfFiles = mutableListOf<File>()
+                    path.walk().forEach {
+                        if (it.isFile) {
+                            listOfFiles.add(it)
+                        }
+                    }
+                    for (element in listOfFiles) {
+                        if (element.nameWithoutExtension == word.englishWord) {
+                            word.filePath = element.path
+                        }
+                    }
                 }
             }
             return dictionary
+            saveDictionary()
         } catch (e: IndexOutOfBoundsException) {
             throw IllegalStateException("Невозможно загрузить словарь.")
         }
     }
 
-    private fun saveDictionary() {
+    fun saveDictionary() {
         val wordsFile = File(fileName)
         val writer = PrintWriter(wordsFile)
-
         dictionary.forEach {
             val lineOfChangedWords =
-                listOf(it.englishWord, it.translation, it.correctAnswerCount.toString()).joinToString("|")
+                listOf(
+                    it.englishWord,
+                    it.translation,
+                    it.correctAnswerCount.toString(),
+                    it.filePath,
+                    it.fileId,
+                ).joinToString("|")
             writer.appendLine(lineOfChangedWords)
         }
         writer.close()
     }
-    
-    private fun File.loadDictionary(): MutableList<Word> {
-        return mutableListOf()
+
+    private fun checkDictionaries(
+        firstDictionary: MutableList<Word>,
+        secondDictionary: MutableList<Word>,
+    ): MutableList<Word> {
+        for (word in firstDictionary) {
+            val userDictionaryForCompare = secondDictionary.map { it.englishWord }
+            if (!userDictionaryForCompare.contains(word.englishWord)) {
+                secondDictionary.add(word)
+            }
+        }
+        return secondDictionary
+        saveDictionary()
     }
-    
+
     fun checkAndUpdateUserWordsFile() {
         val userWordsFile = File(fileName)
         val generalWordsFile = File("words.txt")
-        val generalDictionary = generalWordsFile.loadDictionary()
-        
-        if (generalWordsFile.length() > userWordsFile.length()) {
-            val userDictionary = dictionary
-            generalWordsFile.readLines().forEach {
-                val line = it.split("|")
-                if (line.size == 3) {
-                    generalDictionary.add(Word(line[0], line[1], line[2].toIntOrNull() ?: 0))
-                }
-            }
-            for (word in generalDictionary) {
-                val userDictionaryForCompare = userDictionary.map { it.englishWord }
-                if (!userDictionaryForCompare.contains(word.englishWord)) {
-                    userDictionary.add(word)
-                    println(word)
-                }
-            }
-            saveDictionary()
+        if (generalWordsFile.length() != userWordsFile.length()) {
+            checkDictionaries(loadDictionary(generalWordsFile), dictionary)
         }
+    }
+
+    fun addUserWordsFile() {
+        val userWordsFile = File(fileName)
+        val additionalUserWordsFile = File("${userWordsFile.nameWithoutExtension}_userWords.txt")
+        checkDictionaries(loadDictionary(additionalUserWordsFile), dictionary)
     }
 
     fun resetProgress() {
